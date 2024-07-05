@@ -1,13 +1,14 @@
 #!/usr/bin/env node
-// in index.ts
-const chalk = require("chalk");
-const clear = require("clear");
-const figlet = require("figlet");
-const path = require("path");
-const { program } = require("commander");
-const { printMessage } = require("./utils");
+import chalk from "chalk";
+import clear from "clear";
+import figlet from "figlet";
+import { program } from "commander";
+import YAML from "yaml";
+import { loadFile } from "./utils.js";
+import { createBackup } from "./database/mysql/mysql.js";
 
 clear();
+
 console.log(
   chalk.magenta(figlet.textSync("dsync-cli", { horizontalLayout: "full" }))
 );
@@ -15,16 +16,17 @@ console.log(
 program
   .name("dsync")
   .version("1.0.0")
-  .description("A CLI for backing up your database")
-  .option("-h, --helloWorld", "print hello world message")
-  .parse(process.argv);
+  .description("A CLI for backing up your database");
 
-const options = program.opts();
+program
+  .command("backup")
+  .description("Creates a backup of the database specified in the config file")
+  .requiredOption("-c, --config <path>", "Path to config file")
+  .option("-o, --output <path>", "Path to save the backup", "./backups")
+  .action((options: any) => {
+    const data: string = loadFile(options.config);
+    const config: any = YAML.parse(data);
+    createBackup(config, options.output);
+  });
 
-if (Object.keys(options).length === 0) {
-  program.outputHelp();
-} else {
-  if (options.helloWorld) {
-    printMessage("Hello World!");
-  }
-}
+program.parse(process.argv);

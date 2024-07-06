@@ -23,10 +23,11 @@ program
   .description("Creates a backup of the database specified in the config file")
   .requiredOption("-c, --config <path>", "Path to config file")
   .option("-o, --output <path>", "Path to save the backup", "./backups")
+  .option("-z, --zip", "Compress the backup")
   .action((options: any) => {
     const data: string = loadFile(options.config);
     const config: any = YAML.parse(data);
-    createBackup(config, options.output);
+    createBackup(config, options.output, options.zip);
   });
 
 program.parse(process.argv);

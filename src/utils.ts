@@ -12,7 +12,7 @@ export function loadFile(filePath: string): string {
 
     return data;
   } catch (err) {
-    console.error(err);
+    console.error(chalk.red(err));
     process.exit(1);
   }
 }

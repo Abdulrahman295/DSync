@@ -24,10 +24,11 @@ program
   .requiredOption("-c, --config <path>", "Path to config file")
   .option("-o, --output <path>", "Path to save the backup", "./backups")
   .option("-z, --zip", "Compress the backup")
+  .option("-e, --encrypt", "Encrypt the backup")
   .action((options: any) => {
     const data: string = loadFile(options.config);
-    const config: any = YAML.parse(data);
-    createBackup(config, options.output, options.zip);
+    const dbConfig: any = YAML.parse(data);
+    createBackup(dbConfig, options.output, options.zip, options.encrypt);
   });
 
 program.parse(process.argv);

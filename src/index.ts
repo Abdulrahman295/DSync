@@ -5,7 +5,7 @@ import figlet from "figlet";
 import { program } from "commander";
 import YAML from "yaml";
 import { loadFile } from "./utils.js";
-import { createBackup } from "./database/mysql/mysql.js";
+import { createBackup, restoreBackup } from "./database/mysql/mysql.js";
 
 clear();
 
@@ -27,8 +27,44 @@ program
   .option("-e, --encrypt", "Encrypt the backup")
   .action((options: any) => {
     const data: string = loadFile(options.config);
+
     const dbConfig: any = YAML.parse(data);
+
     createBackup(dbConfig, options.output, options.zip, options.encrypt);
+  });
+
+program
+  .command("restore")
+  .description("Restore a database from a backup file")
+  .requiredOption("-f, --file <path>", "Path to the backup file")
+  .option("-c, --config <path>", "Path to config file")
+  .option(
+    "-o, --output <path>",
+    "Output path for the SQL dump (if not restoring directly)",
+    "./backups"
+  )
+  .option(
+    "--no-direct",
+    "Do not restore directly to the database, create SQL dump instead"
+  )
+
+  .action(async (options) => {
+    let dbConfig: any;
+
+    if (options.direct) {
+      if (!options.config) {
+        console.error(
+          chalk.red("Please provide a config file for direct restore")
+        );
+        process.exit(1);
+      }
+
+      const data = loadFile(options.config);
+
+      dbConfig = YAML.parse(data);
+    }
+
+    restoreBackup(options.file, options.output, options.direct, dbConfig);
   });
 
 program.parse(process.argv);

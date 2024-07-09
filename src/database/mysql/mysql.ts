@@ -3,8 +3,18 @@ import path from "path";
 import { spawn } from "child_process";
 import { pipeline } from "stream/promises";
 import chalk from "chalk";
-import { createGzipCompressor } from "../../archive/fileArchive.js";
-import { createEncryptionCipher } from "../../cipher/cipher.js";
+import { addGzipCompressor, addGzipDecompressor } from "../../gzip/gzip.js";
+import {
+  addEncryptionCipher,
+  addDecryptionCipher,
+} from "../../cipher/cipher.js";
+
+import {
+  isEncrypted,
+  isCompressed,
+  getFileName,
+  evaluateExtension,
+} from "../../utils.js";
 
 export function createBackup(
   dbConfig: any,
@@ -12,13 +22,7 @@ export function createBackup(
   compressEnabled: boolean,
   encryptEnabled: boolean
 ) {
-  console.log(
-    chalk.blue(`Creating backup of ${dbConfig.database} database...`)
-  );
-
-  const dumpFileName: string = `${Math.round(Date.now() / 1000)}.dump.sql`;
-
-  let outputPath: string = path.resolve(backupPath, dumpFileName);
+  console.log(chalk.blue(`Creating backup of ${dbConfig.database} database`));
 
   const mysqldump: any = spawn("mysqldump", [
     `--host=${dbConfig.host}`,
@@ -31,17 +35,18 @@ export function createBackup(
 
   let pipelineStages: any[] = [mysqldump.stdout];
 
-  if (compressEnabled) {
-    createGzipCompressor(pipelineStages);
-    outputPath += ".gz";
-  }
+  if (compressEnabled) addGzipCompressor(pipelineStages);
 
-  if (encryptEnabled) {
-    createEncryptionCipher(pipelineStages);
-    outputPath += ".enc";
-  }
+  if (encryptEnabled) addEncryptionCipher(pipelineStages, compressEnabled);
+
+  const dumpFileName: string = `${Math.round(
+    Date.now() / 1000
+  )}${evaluateExtension(compressEnabled, encryptEnabled)}`;
+
+  let outputPath: string = path.resolve(backupPath, dumpFileName);
 
   const wstream: fs.WriteStream = fs.createWriteStream(outputPath);
+
   pipelineStages.push(wstream);
 
   pipeline(pipelineStages)
@@ -50,5 +55,70 @@ export function createBackup(
     })
     .catch((err) => {
       console.error(chalk.red(err));
+    });
+}
+
+export async function restoreBackup(
+  backupFilePath: string,
+  outputPath: string,
+  directRestore: boolean,
+  dbConfig: any
+) {
+  let inputPath: string = path.resolve(backupFilePath);
+
+  console.log(chalk.blue(`Processing backup file: ${inputPath}`));
+
+  let pipelineStages: any[] = [];
+
+  const fileEncrypted: boolean = await isEncrypted(inputPath);
+
+  const fileCompressed: boolean = await isCompressed(inputPath);
+
+  const rstream: fs.ReadStream = fs.createReadStream(inputPath, {
+    start: fileEncrypted ? 24 : 0,
+  });
+
+  pipelineStages.push(rstream);
+
+  if (fileEncrypted) await addDecryptionCipher(pipelineStages, inputPath);
+
+  if (fileCompressed) addGzipDecompressor(pipelineStages);
+
+  if (directRestore) {
+    const mysql: any = spawn("mysql", [
+      `--host=${dbConfig.host}`,
+      `--port=${dbConfig.port}`,
+      `--user=${dbConfig.user}`,
+      `--password=${dbConfig.password}`,
+      `${dbConfig.database}`,
+    ]);
+
+    pipelineStages.push(mysql.stdin);
+  } else {
+    outputPath = path.resolve(outputPath, `${getFileName(inputPath)}.sql`);
+
+    console.log(chalk.blue(`Creating SQL dump at: ${outputPath}`));
+
+    const wstream: fs.WriteStream = fs.createWriteStream(
+      outputPath
+    ) as fs.WriteStream;
+
+    pipelineStages.push(wstream);
+  }
+
+  pipeline(pipelineStages)
+    .then(() => {
+      if (directRestore) {
+        console.log(
+          chalk.green(`Database restored successfully from ${inputPath}`)
+        );
+      } else {
+        console.log(
+          chalk.green(`SQL dump created successfully at ${outputPath}`)
+        );
+      }
+    })
+    .catch((err) => {
+      console.error(chalk.red(`Error processing backup: ${err}`));
     });
 }

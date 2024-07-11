@@ -6,6 +6,7 @@ import { program } from "commander";
 import YAML from "yaml";
 import { loadFile } from "./utils.js";
 import { createBackup, restoreBackup } from "./database/mysql/mysql.js";
+import { uploadToDrive } from "./cloud/gDrive/gDrive.js";
 
 clear();
 
@@ -47,7 +48,6 @@ program
     "--no-direct",
     "Do not restore directly to the database, create SQL dump instead"
   )
-
   .action(async (options) => {
     let dbConfig: any;
 
@@ -65,6 +65,22 @@ program
     }
 
     restoreBackup(options.file, options.output, options.direct, dbConfig);
+  });
+
+program
+  .command("upload")
+  .description("Upload backup to Google Drive")
+  .requiredOption("-f, --file <path>", "Path to the backup file")
+  .requiredOption(
+    "-c, --credentials <path>",
+    "Path to Google credentials JSON file"
+  )
+  .requiredOption(
+    "-p, --parent <id>",
+    "ID of the parent folder in Google Drive where the file will be uploaded"
+  )
+  .action(async (options) => {
+    await uploadToDrive(options.file, options.credentials, options.parent);
   });
 
 program.parse(process.argv);

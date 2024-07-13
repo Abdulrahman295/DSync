@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { google } from "googleapis";
+import { Auth, google, drive_v3 } from "googleapis";
 import mime from "mime-types";
 import chalk from "chalk";
 
@@ -8,23 +8,25 @@ export async function uploadToDrive(
   backupFilePath: string,
   keyFilePath: string,
   parentFolderId: string
-) {
-  const auth = new google.auth.GoogleAuth({
+): Promise<void> {
+  console.log(chalk.blue("Uploading file to Google Drive"));
+
+  const auth: Auth.GoogleAuth = new google.auth.GoogleAuth({
     keyFile: path.resolve(keyFilePath),
     scopes: ["https://www.googleapis.com/auth/drive.file"],
   });
 
-  const drive = google.drive({
+  const drive: drive_v3.Drive = google.drive({
     version: "v3",
     auth,
   });
 
-  const fileMetadata = {
+  const fileMetadata: any = {
     name: path.basename(backupFilePath),
     parents: [parentFolderId],
   };
 
-  const media = {
+  const media: any = {
     mimeType: mime.lookup(backupFilePath) || "application/octet-stream",
     body: fs.createReadStream(path.resolve(backupFilePath)),
   };

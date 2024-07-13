@@ -7,21 +7,21 @@ import { addGzipCompressor, addGzipDecompressor } from "../../gzip/gzip.js";
 import {
   addEncryptionCipher,
   addDecryptionCipher,
-} from "../../cipher/cipher.js";
+} from "../../encryption/encryption.js";
 
 import {
   isEncrypted,
   isCompressed,
   getFileName,
   evaluateExtension,
-} from "../../utils.js";
+} from "../../utils/fileUtils.js";
 
 export function createBackup(
   dbConfig: any,
   backupPath: string,
   compressEnabled: boolean,
   encryptEnabled: boolean
-) {
+): void {
   console.log(chalk.blue(`Creating backup of ${dbConfig.database} database`));
 
   const mysqldump: any = spawn("mysqldump", [
@@ -63,7 +63,7 @@ export async function restoreBackup(
   outputPath: string,
   directRestore: boolean,
   dbConfig: any
-) {
+): Promise<void> {
   let inputPath: string = path.resolve(backupFilePath);
 
   console.log(chalk.blue(`Processing backup file: ${inputPath}`));

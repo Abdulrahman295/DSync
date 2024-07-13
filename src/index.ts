@@ -4,7 +4,7 @@ import clear from "clear";
 import figlet from "figlet";
 import { program } from "commander";
 import YAML from "yaml";
-import { loadFile } from "./utils.js";
+import { loadFile } from "./utils/fileUtils.js";
 import { createBackup, restoreBackup } from "./database/mysql/mysql.js";
 import { uploadToDrive } from "./cloud/gDrive/gDrive.js";
 

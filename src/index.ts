@@ -72,15 +72,15 @@ program
   .description("Upload backup to Google Drive")
   .requiredOption("-f, --file <path>", "Path to the backup file")
   .requiredOption(
-    "-c, --credentials <path>",
-    "Path to Google credentials JSON file"
+    "-k, --key <path>",
+    "Path to Google credentials JSON  key file"
   )
   .requiredOption(
     "-p, --parent <id>",
     "ID of the parent folder in Google Drive where the file will be uploaded"
   )
   .action(async (options) => {
-    await uploadToDrive(options.file, options.credentials, options.parent);
+    await uploadToDrive(options.file, options.key, options.parent);
   });
 
 program.parse(process.argv);

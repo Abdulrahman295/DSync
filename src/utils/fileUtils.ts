@@ -83,3 +83,7 @@ export async function isCompressed(filePath: string): Promise<boolean> {
 export function getFileName(filePath: string): string {
   return path.basename(filePath).split(".")[0];
 }
+
+export function getFileSize(filePath: string): number {
+  return fs.statSync(filePath).size;
+}

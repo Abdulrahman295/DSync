@@ -7,6 +7,10 @@ import YAML from "yaml";
 import { loadFile } from "./utils/fileUtils.js";
 import { createBackup, restoreBackup } from "./database/mysql/mysql.js";
 import { uploadToDrive } from "./cloud/gDrive/gDrive.js";
+import {
+  setupScheduler,
+  installSchedulerService,
+} from "./schedule/schedule.js";
 
 clear();
 
@@ -80,7 +84,43 @@ program
     "ID of the parent folder in Google Drive where the file will be uploaded"
   )
   .action(async (options) => {
-    await uploadToDrive(options.file, options.key, options.parent);
+    try {
+      await uploadToDrive(options.file, options.key, options.parent);
+    } catch (error: any) {
+      console.error(chalk.red(error.message));
+      process.exit(1);
+    }
+  });
+
+program
+  .command("schedule")
+  .description("Schedule regular backups")
+  .option("-i, --interval <cron>", "Cron expression for scheduling the backup")
+  .option("-c, --config <path>", "Path to config file")
+  .option("-o, --output <path>", "Path to save the backup", "./backups")
+  .option("-z, --zip", "Compress the backup")
+  .option("-e, --encrypt", "Encrypt the backup")
+
+  .action(async (options) => {
+    try {
+      const data: string = loadFile(options.config);
+
+      const dbConfig: any = YAML.parse(data);
+
+      const jobData: any = {
+        dbConfig,
+        output: options.output,
+        zip: options.zip,
+        encrypt: options.encrypt,
+      };
+
+      await setupScheduler(jobData, options.interval);
+
+      installSchedulerService();
+    } catch (error: any) {
+      console.error(chalk.red(error.message));
+      process.exit(1);
+    }
   });
 
 program.parse(process.argv);

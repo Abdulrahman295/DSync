@@ -59,7 +59,8 @@ async function getSessionURL(
 
   const client: OAuth2Client = (await auth.getClient()) as OAuth2Client;
 
-  const accessToken: string = (await client.getAccessToken()).token as string;
+  const accessToken: string | null | undefined = (await client.getAccessToken())
+    .token;
 
   if (!accessToken) {
     throw new Error("Failed to obtain access token");
@@ -95,71 +96,66 @@ export async function uploadToDrive(
   keyFilePath: string,
   parentFolderId: string
 ): Promise<void> {
-  try {
-    console.log(chalk.blue("Uploading file to Google Drive"));
+  console.log(chalk.blue("Uploading file to Google Drive"));
 
-    if (!fs.existsSync(backupFilePath)) {
-      throw new Error(`Backup file not found: ${backupFilePath}`);
-    }
-
-    if (!fs.existsSync(keyFilePath)) {
-      throw new Error(`Key file not found: ${keyFilePath}`);
-    }
-
-    const sessionURL: string = await getSessionURL(
-      backupFilePath,
-      keyFilePath,
-      parentFolderId
-    );
-
-    const operation: retry.RetryOperation = retry.operation({
-      retries: 4,
-      factor: 2,
-      minTimeout: 60 * 1000,
-      maxTimeout: 5 * 60 * 1000,
-      randomize: true,
-    });
-
-    const fileSize: number = getFileSize(backupFilePath);
-
-    operation.attempt(async (currentAttempt) => {
-      try {
-        const startByte: number = await getResumePosition(sessionURL, fileSize);
-
-        const uploadStream: fs.ReadStream = fs.createReadStream(
-          path.resolve(backupFilePath),
-          {
-            start: startByte,
-          }
-        );
-
-        const uploadRes: Response = await fetch(sessionURL, {
-          method: "PUT",
-          headers: {
-            "Content-Range": `bytes ${startByte}-${fileSize - 1}/${fileSize}`,
-          },
-          body: uploadStream,
-        });
-
-        if (!uploadRes.ok) throw new Error(uploadRes.statusText);
-
-        console.log(chalk.green("File uploaded successfully to Google Drive"));
-      } catch (err: any) {
-        console.log(
-          chalk.yellow(`Upload attempt ${currentAttempt} failed: ${err}`)
-        );
-
-        if (operation.retry(err)) {
-          console.log(chalk.yellow(`Retrying upload...`));
-        } else {
-          console.log(
-            chalk.red("Error uploading file to Google Drive after all retries")
-          );
-        }
-      }
-    });
-  } catch (error: any) {
-    console.error(chalk.red("Error uploading file to Google Drive"));
-    console.error(chalk.red(error));
+  if (!fs.existsSync(backupFilePath)) {
+    throw new Error(`Backup file not found: ${backupFilePath}`);
   }
+
+  if (!fs.existsSync(keyFilePath)) {
+    throw new Error(`Key file not found: ${keyFilePath}`);
+  }
+
+  const sessionURL: string = await getSessionURL(
+    backupFilePath,
+    keyFilePath,
+    parentFolderId
+  );
+
+  const operation: retry.RetryOperation = retry.operation({
+    retries: 4,
+    factor: 2,
+    minTimeout: 60 * 1000,
+    maxTimeout: 5 * 60 * 1000,
+    randomize: true,
+  });
+
+  const fileSize: number = getFileSize(backupFilePath);
+
+  operation.attempt(async (currentAttempt) => {
+    try {
+      const startByte: number = await getResumePosition(sessionURL, fileSize);
+
+      const uploadStream: fs.ReadStream = fs.createReadStream(
+        path.resolve(backupFilePath),
+        {
+          start: startByte,
+        }
+      );
+
+      const uploadRes: Response = await fetch(sessionURL, {
+        method: "PUT",
+        headers: {
+          "Content-Range": `bytes ${startByte}-${fileSize - 1}/${fileSize}`,
+        },
+        body: uploadStream,
+      });
+
+      if (!uploadRes.ok) throw new Error(uploadRes.statusText);
+
+      console.log(chalk.green("File uploaded successfully to Google Drive"));
+    } catch (err: any) {
+      console.log(
+        chalk.yellow(`Upload attempt ${currentAttempt} failed: ${err}`)
+      );
+
+      if (operation.retry(err)) {
+        console.log(chalk.yellow(`Retrying upload...`));
+      } else {
+        console.log(
+          chalk.red("Error uploading file to Google Drive after all retries")
+        );
+      }
+    }
+  });
 }

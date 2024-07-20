@@ -26,28 +26,94 @@ export async function setupScheduler(
   });
 }
 
-export function installSchedulerService(): void {
-  console.log(chalk.cyanBright("Installing scheduler as a windows service"));
+export function installSchedulerService(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    console.log(chalk.cyanBright("Installing scheduler as a windows service"));
 
+    const __filename = fileURLToPath(import.meta.url);
+
+    const __dirname = path.dirname(__filename);
+
+    const svc: Service = new Service({
+      name: "DsyncService",
+      description: "Service to run scheduled backups",
+      script: path.join(__dirname, "./serviceScript.ts"),
+      nodeOptions: ["--loader", "ts-node/esm"],
+    });
+
+    svc.install();
+
+    svc.on("install", () => {
+      svc.start();
+      resolve();
+    });
+
+    svc.on("error", (err) => {
+      reject(err);
+    });
+  });
+}
+
+function getSchedulerService(): Service {
   const __filename = fileURLToPath(import.meta.url);
-
   const __dirname = path.dirname(__filename);
 
-  const svc: Service = new Service({
+  return new Service({
     name: "DsyncService",
-    description: "Service to run scheduled backups",
     script: path.join(__dirname, "./serviceScript.ts"),
-    nodeOptions: ["--loader", "ts-node/esm"],
   });
+}
 
-  svc.install();
+export function stopSchedulerService(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    console.log(chalk.cyanBright("Stopping the scheduler service"));
 
-  svc.on("install", () => {
-    console.log(chalk.green("Service installed successfully"));
+    const svc: Service = getSchedulerService();
+
+    svc.stop();
+
+    svc.on("stop", () => {
+      resolve();
+    });
+
+    svc.on("error", (err) => {
+      reject(err);
+    });
+  });
+}
+
+export function resumeSchedulerService(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    console.log(chalk.cyanBright("Resuming the scheduler service"));
+
+    const svc: Service = getSchedulerService();
+
     svc.start();
-  });
 
-  svc.on("error", (err) => {
-    console.error(chalk.red("Service encountered an error:", err));
+    svc.on("start", () => {
+      resolve();
+    });
+
+    svc.on("error", (err) => {
+      reject(err);
+    });
+  });
+}
+
+export function removeSchedulerService(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    console.log(chalk.cyanBright("Removing the scheduler service"));
+
+    const svc: Service = getSchedulerService();
+
+    svc.uninstall();
+
+    svc.on("uninstall", () => {
+      resolve();
+    });
+
+    svc.on("error", (err) => {
+      reject(err);
+    });
   });
 }

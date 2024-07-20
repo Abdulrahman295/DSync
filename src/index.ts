@@ -10,6 +10,9 @@ import { uploadToDrive } from "./cloud/gDrive/gDrive.js";
 import {
   setupScheduler,
   installSchedulerService,
+  stopSchedulerService,
+  removeSchedulerService,
+  resumeSchedulerService,
 } from "./schedule/schedule.js";
 
 clear();
@@ -149,7 +152,51 @@ program
 
       await setupScheduler(jobData, options.interval);
 
-      installSchedulerService();
+      await installSchedulerService();
+
+      console.log(chalk.green("Scheduler service installed successfully"));
+    } catch (error: any) {
+      console.error(chalk.red(error.message));
+      process.exit(1);
+    }
+  });
+
+program
+  .command("stop-scheduler")
+  .description("Stop the backup scheduler service")
+  .action(async () => {
+    try {
+      await stopSchedulerService();
+
+      console.log(chalk.green("Scheduler service stopped successfully"));
+    } catch (error: any) {
+      console.error(chalk.red(error.message));
+      process.exit(1);
+    }
+  });
+
+program
+  .command("resume-scheduler")
+  .description("Resume the backup scheduler service")
+  .action(async () => {
+    try {
+      await resumeSchedulerService();
+
+      console.log(chalk.green("Scheduler service resumed successfully"));
+    } catch (error: any) {
+      console.error(chalk.red(error.message));
+      process.exit(1);
+    }
+  });
+
+program
+  .command("remove-scheduler")
+  .description("Remove the backup scheduler service")
+  .action(async () => {
+    try {
+      await removeSchedulerService();
+
+      console.log(chalk.green("Scheduler service removed successfully"));
     } catch (error: any) {
       console.error(chalk.red(error.message));
       process.exit(1);

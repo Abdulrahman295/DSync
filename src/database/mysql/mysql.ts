@@ -16,12 +16,12 @@ import {
   evaluateExtension,
 } from "../../utils/fileUtils.js";
 
-export function createBackup(
+export async function createBackup(
   dbConfig: any,
-  backupPath: string,
+  backupDirectoryPath: string,
   compressEnabled: boolean,
   encryptEnabled: boolean
-): void {
+): Promise<string> {
   console.log(chalk.blue(`Creating backup of ${dbConfig.database} database`));
 
   const mysqldump: any = spawn("mysqldump", [
@@ -43,19 +43,15 @@ export function createBackup(
     Date.now() / 1000
   )}${evaluateExtension(compressEnabled, encryptEnabled)}`;
 
-  let outputPath: string = path.resolve(backupPath, dumpFileName);
+  let outputPath: string = path.resolve(backupDirectoryPath, dumpFileName);
 
   const wstream: fs.WriteStream = fs.createWriteStream(outputPath);
 
   pipelineStages.push(wstream);
 
-  pipeline(pipelineStages)
-    .then(() => {
-      console.log(chalk.green(`Backup created successfully at ${outputPath}`));
-    })
-    .catch((err) => {
-      console.error(chalk.red(err));
-    });
+  await pipeline(pipelineStages);
+
+  return outputPath;
 }
 
 export async function restoreBackup(
@@ -106,19 +102,5 @@ export async function restoreBackup(
     pipelineStages.push(wstream);
   }
 
-  pipeline(pipelineStages)
-    .then(() => {
-      if (directRestore) {
-        console.log(
-          chalk.green(`Database restored successfully from ${inputPath}`)
-        );
-      } else {
-        console.log(
-          chalk.green(`SQL dump created successfully at ${outputPath}`)
-        );
-      }
-    })
-    .catch((err) => {
-      console.error(chalk.red(`Error processing backup: ${err}`));
-    });
+  await pipeline(pipelineStages);
 }

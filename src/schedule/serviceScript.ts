@@ -1,8 +1,15 @@
 import { createBackup } from "../database/mysql/mysql.js";
+import { uploadToDrive } from "../cloud/gDrive/gDrive.js";
 import Queue from "bull";
+
 async function processBackupJob(job: any) {
-  const { dbConfig, output, zip, encrypt } = job.data;
-  createBackup(dbConfig, output, zip, encrypt);
+  const { dbConfig, output, zip, encrypt, upload, key, parent } = job.data;
+
+  const backupFilePath = await createBackup(dbConfig, output, zip, encrypt);
+
+  if (upload) {
+    await uploadToDrive(backupFilePath, key, parent);
+  }
 }
 
 async function startScheduler(): Promise<void> {

@@ -10,7 +10,7 @@ export async function setupScheduler(
 ): Promise<void> {
   console.log(chalk.cyanBright("Setting up scheduler"));
 
-  const backupQueue: any = new Queue("backupQueue", {
+  const jobQueue: any = new Queue("jobQueue", {
     redis: {
       host: "127.0.0.1",
       port: 6379,
@@ -19,11 +19,25 @@ export async function setupScheduler(
 
   console.log(chalk.cyanBright("Clearing any previous job configurations"));
 
-  await backupQueue.obliterate({ force: true });
+  await jobQueue.obliterate({ force: true });
 
-  await backupQueue.add("scheduled-backup", jobData, {
+  console.log(chalk.cyanBright("Setting up backup job configuration"));
+
+  await jobQueue.add("scheduled-backup", jobData, {
     repeat: { cron: interval },
   });
+
+  if (jobData.mail) {
+    console.log(chalk.cyanBright("Setting up mail job configuration"));
+
+    await jobQueue.add(
+      "scheduled-mail",
+      { recipientMail: jobData.mail },
+      {
+        repeat: { cron: "0 0 * * *" },
+      }
+    );
+  }
 }
 
 export function installSchedulerService(): Promise<void> {

@@ -7,7 +7,7 @@ import chalk from "chalk";
 import retry from "retry";
 import { Response } from "node-fetch";
 import fetch from "node-fetch";
-import { getFileSize } from "../../utils/fileUtils.js";
+import { getFileSize } from "../../utils/file.js";
 
 async function getResumePosition(
   sessionURL: string,

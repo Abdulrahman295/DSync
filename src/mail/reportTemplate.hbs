@@ -1,0 +1,66 @@
+<html>
+  <head>
+    <style>
+      body { font-family: Arial, sans-serif; } table { border-collapse:
+      collapse; width: 100%; } th, td { border: 1px solid #ddd; padding: 8px; }
+      th { background-color: #f2f2f2; }
+    </style>
+  </head>
+  <body>
+    <h1>Daily Backup Report for {{date}}</h1>
+
+    <h2>Summary</h2>
+    <p style="font-size: 16px; line-height: 1.5;">
+      Total backups:
+      <span style="font-weight: bold;">{{totalBackups}}</span>
+      | Successful:
+      <span style="color: green; font-weight: bold;">{{numSuccess}}</span>
+      | Failed:
+      <span style="color: red; font-weight: bold;">{{numFail}}</span>
+    </p>
+
+    <h2>Recent Successful Backups</h2>
+    <table>
+      <tr>
+        <th>Job ID</th>
+        <th>Database</th>
+        <th>Compressed</th>
+        <th>Encrypted</th>
+        <th>Uploaded</th>
+        <th>Size</th>
+        <th>Duration</th>
+        <th>Timestamp</th>
+      </tr>
+      {{#each successfulRecords}}
+        <tr>
+          <td>{{this.id}}</td>
+          <td>{{this.database}}</td>
+          <td>{{this.compressed}}</td>
+          <td>{{this.encrypted}}</td>
+          <td>{{this.uploaded}}</td>
+          <td>{{this.size}}</td>
+          <td>{{this.duration}}</td>
+          <td>{{this.timestamp}}</td>
+        </tr>
+      {{/each}}
+    </table>
+
+    <h2>Recent Failed Backups</h2>
+    <table>
+      <tr>
+        <th>Job ID</th>
+        <th>Database</th>
+        <th>Details</th>
+        <th>Timestamp</th>
+      </tr>
+      {{#each failedRecords}}
+        <tr>
+          <td>{{this.id}}</td>
+          <td>{{this.database}}</td>
+          <td>{{this.error}}</td>
+          <td>{{this.timestamp}}</td>
+        </tr>
+      {{/each}}
+    </table>
+  </body>
+</html>

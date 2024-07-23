@@ -4,7 +4,7 @@ import clear from "clear";
 import figlet from "figlet";
 import { program } from "commander";
 import YAML from "yaml";
-import { loadFile } from "./utils/fileUtils.js";
+import { loadFile } from "./utils/file.js";
 import { createBackup, restoreBackup } from "./database/mysql/mysql.js";
 import { uploadToDrive } from "./cloud/gDrive/gDrive.js";
 import {
@@ -134,6 +134,10 @@ program
     "-p, --parent <id>",
     "ID of the parent folder in Google Drive where the file will be uploaded"
   )
+  .option(
+    "-m, --mail <recipient mail>",
+    "Email address to send daily reports to"
+  )
   .action(async (options) => {
     try {
       const data: string = loadFile(options.config);
@@ -148,6 +152,7 @@ program
         upload: options.upload,
         key: options.key,
         parent: options.parent,
+        mail: options.mail,
       };
 
       await setupScheduler(jobData, options.interval);

@@ -14,7 +14,7 @@ import {
   isCompressed,
   getFileName,
   evaluateExtension,
-} from "../../utils/fileUtils.js";
+} from "../../utils/file.js";
 
 export async function createBackup(
   dbConfig: any,

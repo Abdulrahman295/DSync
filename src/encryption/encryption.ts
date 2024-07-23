@@ -3,7 +3,7 @@ import { Transform } from "stream";
 import crypto from "crypto";
 import "dotenv/config";
 import chalk from "chalk";
-import { readChunck } from "../utils/fileUtils.js";
+import { readChunck } from "../utils/file.js";
 
 export function addEncryptionCipher(
   pipelineStages: any[],

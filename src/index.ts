@@ -5,7 +5,8 @@ import figlet from "figlet";
 import { program } from "commander";
 import YAML from "yaml";
 import { loadFile } from "./utils/file.js";
-import { createBackup, restoreBackup } from "./database/mysql/mysql.js";
+import { restoreBackup } from "./database/restore.js";
+import { createBackup } from "./database/backup.js";
 import { uploadToDrive } from "./cloud/gDrive/gDrive.js";
 import {
   setupScheduler,
@@ -30,6 +31,7 @@ program
   .command("backup")
   .description("Creates a backup of the database specified in the config file")
   .requiredOption("-c, --config <path>", "Path to config file")
+  .requiredOption("-t, --type <type>", "Type of database (mysql, postgresql)")
   .option("-o, --output <path>", "Path to save the backup", "./backups")
   .option("-z, --zip", "Compress the backup")
   .option("-e, --encrypt", "Encrypt the backup")
@@ -41,6 +43,7 @@ program
 
       await createBackup(
         dbConfig,
+        options.type,
         options.output,
         options.zip,
         options.encrypt
@@ -58,6 +61,7 @@ program
   .description("Restore a database from a backup file")
   .requiredOption("-f, --file <path>", "Path to the backup file")
   .option("-c, --config <path>", "Path to database config file")
+  .option("-t, --type <type>", "Type of database (mysql, postgresql)")
   .option(
     "-o, --output <path>",
     "Output path for the SQL dump (if not restoring directly)",
@@ -72,8 +76,10 @@ program
       let dbConfig: any;
 
       if (options.direct) {
-        if (!options.config) {
-          throw new Error("Please provide a config file for direct restore");
+        if (!options.config || !options.type) {
+          throw new Error(
+            "Database config and type are required for direct restore"
+          );
         }
 
         const data: string = loadFile(options.config);
@@ -85,7 +91,8 @@ program
         options.file,
         options.output,
         options.direct,
-        dbConfig
+        dbConfig,
+        options.type
       );
 
       if (options.direct) {
@@ -125,6 +132,7 @@ program
   .description("Schedule regular backups")
   .option("-i, --interval <cron>", "Cron expression for scheduling the backup")
   .option("-c, --config <path>", "Path to database config file")
+  .option("-t, --type <type>", "Type of database (mysql, postgresql)")
   .option("-o, --output <path>", "Path to save the backup", "./backups")
   .option("-z, --zip", "Compress the backup")
   .option("-e, --encrypt", "Encrypt the backup")
@@ -146,6 +154,7 @@ program
 
       const jobData: any = {
         dbConfig,
+        type: options.type,
         output: options.output,
         zip: options.zip,
         encrypt: options.encrypt,

@@ -31,7 +31,7 @@ program
   .command("backup")
   .description("Creates a backup of the database specified in the config file")
   .requiredOption("-c, --config <path>", "Path to config file")
-  .requiredOption("-t, --type <type>", "Type of database (mysql, postgresql)")
+  .requiredOption("-t, --type <type>", "Type of database (mysql, postgresql, mongodb)")
   .option("-o, --output <path>", "Path to save the backup", "./backups")
   .option("-z, --zip", "Compress the backup")
   .option("-e, --encrypt", "Encrypt the backup")
@@ -61,7 +61,7 @@ program
   .description("Restore a database from a backup file")
   .requiredOption("-f, --file <path>", "Path to the backup file")
   .option("-c, --config <path>", "Path to database config file")
-  .option("-t, --type <type>", "Type of database (mysql, postgresql)")
+  .option("-t, --type <type>", "Type of database (mysql, postgresql, mongodb)")
   .option(
     "-o, --output <path>",
     "Output path for the SQL dump (if not restoring directly)",
@@ -132,7 +132,7 @@ program
   .description("Schedule regular backups")
   .option("-i, --interval <cron>", "Cron expression for scheduling the backup")
   .option("-c, --config <path>", "Path to database config file")
-  .option("-t, --type <type>", "Type of database (mysql, postgresql)")
+  .option("-t, --type <type>", "Type of database (mysql, postgresql, mongodb)")
   .option("-o, --output <path>", "Path to save the backup", "./backups")
   .option("-z, --zip", "Compress the backup")
   .option("-e, --encrypt", "Encrypt the backup")

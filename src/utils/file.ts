@@ -19,9 +19,10 @@ export function loadFile(filePath: string): string {
 
 export function evaluateExtension(
   fileCompressed: boolean,
-  fileEncrypted: boolean
+  fileEncrypted: boolean,
+  databaseType: string
 ): string {
-  let extension: string = ".sql";
+  let extension: string = databaseType === "mongodb" ? ".archive" : ".sql";
 
   if (fileCompressed) {
     extension = ".gz";

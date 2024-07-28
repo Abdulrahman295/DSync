@@ -7,6 +7,7 @@ import { addDecryptionCipher } from "../encryption/encryption.js";
 import { isEncrypted, isCompressed, getFileName } from "../utils/file.js";
 import { createMysqlRestoreStream } from "./mysql/mysql.js";
 import { createPostgresRestoreStream } from "./postgresql/postgresql.js";
+import { createMongoRestoreStream } from "./mongodb/mongodb.js";
 
 export async function restoreBackup(
   backupFilePath: string,
@@ -60,6 +61,8 @@ function createRestoreStream(dbConfig: any, databaseType: string): any {
       return createMysqlRestoreStream(dbConfig);
     case "postgresql":
       return createPostgresRestoreStream(dbConfig);
+    case "mongodb":
+      return createMongoRestoreStream(dbConfig);
     default:
       throw new Error("Unsupported database type");
   }

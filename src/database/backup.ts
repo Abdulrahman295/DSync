@@ -6,6 +6,7 @@ import { addGzipCompressor } from "../gzip/gzip.js";
 import { addEncryptionCipher } from "../encryption/encryption.js";
 import { createMysqlDumpStream } from "./mysql/mysql.js";
 import { createPostgresDumpStream } from "./postgresql/postgresql.js";
+import { createMongoDumpStream } from "./mongodb/mongodb.js";
 import { evaluateExtension } from "../utils/file.js";
 
 export async function createBackup(
@@ -27,7 +28,7 @@ export async function createBackup(
 
   const dumpFileName: string = `${Math.round(
     Date.now() / 1000
-  )}${evaluateExtension(compressEnabled, encryptEnabled)}`;
+  )}${evaluateExtension(compressEnabled, encryptEnabled, databaseType)}`;
 
   let outputPath: string = path.resolve(backupDirectoryPath, dumpFileName);
 
@@ -46,6 +47,8 @@ function createDumpStream(dbConfig: any, databaseType: string): any {
       return createMysqlDumpStream(dbConfig);
     case "postgresql":
       return createPostgresDumpStream(dbConfig);
+    case "mongodb":
+      return createMongoDumpStream(dbConfig);
     default:
       throw new Error("Unsupported database type");
   }

@@ -7,7 +7,7 @@ import YAML from "yaml";
 import { loadFile } from "./utils/file.js";
 import { restoreBackup } from "./database/restore.js";
 import { createBackup } from "./database/backup.js";
-import { uploadToDrive } from "./cloud/gDrive/gDrive.js";
+import { uploadBackup } from "./cloud/cloud.js";
 import {
   setupScheduler,
   installSchedulerService,
@@ -31,8 +31,11 @@ program
   .command("backup")
   .description("Creates a backup of the database specified in the config file")
   .requiredOption("-c, --config <path>", "Path to config file")
-  .requiredOption("-t, --type <type>", "Type of database (mysql, postgresql, mongodb)")
-  .option("-o, --output <path>", "Path to save the backup", "./backups")
+  .requiredOption(
+    "-t, --type <type>",
+    "Type of database (mysql, postgresql, mongodb)"
+  )
+  .option("-o, --output <path>", "Path to save the backup")
   .option("-z, --zip", "Compress the backup")
   .option("-e, --encrypt", "Encrypt the backup")
   .action(async (options: any) => {
@@ -64,8 +67,7 @@ program
   .option("-t, --type <type>", "Type of database (mysql, postgresql, mongodb)")
   .option(
     "-o, --output <path>",
-    "Output path for the SQL dump (if not restoring directly)",
-    "./backups"
+    "Output path for the SQL dump (if not restoring directly)"
   )
   .option(
     "--no-direct",
@@ -108,19 +110,24 @@ program
 
 program
   .command("upload")
-  .description("Upload backup to Google Drive")
+  .description("Upload backup to S3 or Google Drive")
   .requiredOption("-f, --file <path>", "Path to the backup file")
+  .requiredOption("-k, --key <path>", "Path to credentials JSON file")
   .requiredOption(
-    "-k, --key <path>",
-    "Path to Google credentials JSON key file"
+    "-d, --destination <dest>",
+    "S3 bucket name or Google Drive folder ID where the file will be uploaded"
   )
-  .requiredOption(
-    "-p, --parent <id>",
-    "ID of the parent folder in Google Drive where the file will be uploaded"
-  )
+  .requiredOption("-t, --type <type>", "Upload type: 's3' or 'drive'")
+  .option("-r, --region <region>", "AWS region for S3 upload", "us-east-1")
   .action(async (options) => {
     try {
-      await uploadToDrive(options.file, options.key, options.parent);
+      await uploadBackup(
+        options.file,
+        options.key,
+        options.type,
+        options.destination,
+        options.region
+      );
     } catch (error: any) {
       console.error(chalk.red(error.message));
       process.exit(1);
@@ -133,19 +140,20 @@ program
   .option("-i, --interval <cron>", "Cron expression for scheduling the backup")
   .option("-c, --config <path>", "Path to database config file")
   .option("-t, --type <type>", "Type of database (mysql, postgresql, mongodb)")
-  .option("-o, --output <path>", "Path to save the backup", "./backups")
+  .option("-o, --output <path>", "Path to save the backup")
   .option("-z, --zip", "Compress the backup")
   .option("-e, --encrypt", "Encrypt the backup")
-  .option("-u, --upload", "Upload backup to Google Drive")
-  .option("-k, --key <path>", "Path to Google credentials JSON key file")
+  .option("-u, --upload <type>", "Upload type: 's3' or 'drive'")
+  .option("-k, --key <path>", "Path to credentials JSON file")
   .option(
-    "-p, --parent <id>",
-    "ID of the parent folder in Google Drive where the file will be uploaded"
+    "-d, --destination <dest>",
+    "S3 bucket name or Google Drive folder ID where the file will be uploaded"
   )
   .option(
     "-m, --mail <recipient mail>",
     "Email address to send daily reports to"
   )
+  .option("-r, --region <region>", "AWS region for S3 upload", "us-east-1")
   .action(async (options) => {
     try {
       const data: string = loadFile(options.config);
@@ -160,7 +168,8 @@ program
         encrypt: options.encrypt,
         upload: options.upload,
         key: options.key,
-        parent: options.parent,
+        destination: options.destination,
+        region: options.region,
         mail: options.mail,
       };
 

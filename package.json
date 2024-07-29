@@ -23,6 +23,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.620.0",
     "@types/bull": "^4.10.0",
     "@types/clear": "^0.1.4",
     "@types/figlet": "^1.5.8",

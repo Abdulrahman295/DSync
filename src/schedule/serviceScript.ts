@@ -1,13 +1,22 @@
 import fs from "fs";
 import Queue from "bull";
 import { createBackup } from "../database/backup.js";
-import { uploadToDrive } from "../cloud/gDrive/gDrive.js";
+import { uploadBackup } from "../cloud/cloud.js";
 import logger from "../utils/logger.js";
 import { sendReport } from "../mail/mail.js";
 
 async function processBackupJob(job: any) {
-  const { dbConfig, type, output, zip, encrypt, upload, key, parent } =
-    job.data;
+  const {
+    dbConfig,
+    type,
+    output,
+    zip,
+    encrypt,
+    upload,
+    key,
+    destination,
+    region,
+  } = job.data;
 
   const startTime: Date = new Date();
 
@@ -23,11 +32,7 @@ async function processBackupJob(job: any) {
     const fileSize: number = fs.statSync(backupFilePath).size;
 
     if (upload) {
-      if (!key || !parent) {
-        throw new Error("Missing key or parent ID for Google Drive upload");
-      }
-
-      await uploadToDrive(backupFilePath, key, parent);
+      await uploadBackup(backupFilePath, key, upload, destination, region);
     }
 
     const endTime: Date = new Date();

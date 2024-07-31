@@ -115,10 +115,8 @@ export async function uploadToS3(
   const awsCredentials: any = JSON.parse(loadFile(keyFilePath));
 
   const client: S3Client = new S3Client({
-    endpoint: "http://127.0.0.1:4566", // Localstack endpoint
     region,
     credentials: awsCredentials,
-    forcePathStyle: true, // Required for localstack
   });
 
   const uploadId: string = await getUploadID(client, backupFilePath, s3Bucket);

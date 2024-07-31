@@ -35,7 +35,7 @@ program
     "-t, --type <type>",
     "Type of database (mysql, postgresql, mongodb)"
   )
-  .option("-o, --output <path>", "Path to save the backup")
+  .requiredOption("-o, --output <path>", "Path to save the backup")
   .option("-z, --zip", "Compress the backup")
   .option("-e, --encrypt", "Encrypt the backup")
   .action(async (options: any) => {
@@ -137,10 +137,16 @@ program
 program
   .command("schedule")
   .description("Schedule regular backups")
-  .option("-i, --interval <cron>", "Cron expression for scheduling the backup")
-  .option("-c, --config <path>", "Path to database config file")
-  .option("-t, --type <type>", "Type of database (mysql, postgresql, mongodb)")
-  .option("-o, --output <path>", "Path to save the backup")
+  .requiredOption(
+    "-i, --interval <cron>",
+    "Cron expression for scheduling the backup"
+  )
+  .requiredOption("-c, --config <path>", "Path to database config file")
+  .requiredOption(
+    "-t, --type <type>",
+    "Type of database (mysql, postgresql, mongodb)"
+  )
+  .requiredOption("-o, --output <path>", "Path to save the backup")
   .option("-z, --zip", "Compress the backup")
   .option("-e, --encrypt", "Encrypt the backup")
   .option("-u, --upload <type>", "Upload type: 's3' or 'drive'")
